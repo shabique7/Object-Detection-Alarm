@@ -1,0 +1,60 @@
+const int extPushButton = 4;   
+const int LED = 15;         
+const int trigPin = 5;        
+const int echoPin = 18;       
+
+bool ledState = false;        
+bool autoOverride = false;     // If object is detected
+int lastButtonState = HIGH;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+  pinMode(extPushButton, INPUT_PULLUP);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+  digitalWrite(LED, LOW);
+  Serial.begin(115200);  
+}
+
+void loop() {
+  int buttonState = digitalRead(extPushButton);
+
+  if (lastButtonState == HIGH && buttonState == LOW) {
+    ledState = !ledState;
+    Serial.println("Button toggled: LED is " + String(ledState ? "ON" : "OFF"));
+    delay(200);  // Debounce
+  }
+  lastButtonState = buttonState;
+
+  long duration;
+  int distance;
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;  // Convert to cm
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  //LED CONTROL SECTION
+  if (distance > 0 && distance <= 10) {
+    digitalWrite(LED, HIGH);   // Turn on automatically if object is near
+    autoOverride = true;
+  } else {
+    if (autoOverride) {
+      digitalWrite(LED, ledState ? HIGH : LOW);  // Return to manual state
+      autoOverride = false;
+    } else {
+      digitalWrite(LED, ledState ? HIGH : LOW);
+    }
+  }
+
+  delay(100);
+}
